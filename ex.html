@@ -6,36 +6,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Питання до іспиту</title>
     <style>
+          /* Light theme (default) */
+          :root {
+            --background-color: #f5f5f5;
+            --text-color: #2c3e50;
+            --card-background: #ffffff;
+            --card-hover: #f8f9fa;
+            --border-color: #ddd;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --answer-background: #f8f9fa;
+        }
+
+        /* Dark theme */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background-color: #1a1a1a;
+                --text-color: #e0e0e0;
+                --card-background: #2d2d2d;
+                --card-hover: #3d3d3d;
+                --border-color: #404040;
+                --shadow-color: rgba(0, 0, 0, 0.3);
+                --answer-background: #363636;
+            }
+        }
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            background-color: #f5f5f5;
+            background-color: var(--background-color);
+            color: var(--text-color);
         }
 
         h1 {
-            color: #2c3e50;
+            color: var(--text-color);
             text-align: center;
             margin-bottom: 20px;
             font-size: 24px;
         }
 
         h2 {
-            color: #2c3e50;
+            color: var(--text-color);
             font-size: 18px;
         }
 
-        h3{ 
+        h3 { 
             font-size: 16px;
+            color: var(--text-color);
         }
-
 
         .search-container {
             margin-bottom: 20px;
             position: sticky;
             top: 0;
-            background-color: #f5f5f5;
+            background-color: var(--background-color);
             padding: 10px 0;
             z-index: 100;
         }
@@ -44,11 +69,13 @@
             width: 100%;
             margin: 0 auto;
             padding: 12px;
-            border: 2px solid #ddd;
+            border: 2px solid var(--border-color);
             border-radius: 8px;
             font-size: 16px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px var(--shadow-color);
             transition: border-color 0.3s ease;
+            background-color: var(--card-background);
+            color: var(--text-color);
         }
 
         .search-input:focus {
@@ -58,9 +85,9 @@
 
         .question-container {
             margin-bottom: 15px;
-            background: white;
+            background: var(--card-background);
             border-radius: 8px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 2px 4px var(--shadow-color);
             overflow: hidden;
             transition: opacity 0.3s ease;
         }
@@ -71,7 +98,7 @@
 
         .question {
             padding: 15px;
-            background-color: #fff;
+            background-color: var(--card-background);
             cursor: pointer;
             display: flex;
             justify-content: space-between;
@@ -80,12 +107,12 @@
             width: 100%;
             text-align: left;
             font-size: 16px;
-            color: #2c3e50;
+            color: var(--text-color);
             font-weight: 500;
         }
 
         .question:hover {
-            background-color: #f8f9fa;
+            background-color: var(--card-hover);
         }
 
         .question::after {
@@ -102,26 +129,27 @@
             max-height: 0;
             overflow: hidden;
             transition: max-height 0.3s ease-out;
-            background-color: #f8f9fa;
+            background-color: var(--answer-background);
             padding: 0 15px;
+            color: var(--text-color);
         }
 
         .answer.show {
-            overflow: scroll;
             padding: 15px;
+            max-height: 500px;
         }
 
         .no-results {
             text-align: center;
             padding: 20px;
-            color: #666;
+            color: var(--text-color);
             display: none;
         }
 
         .loading {
             text-align: center;
             padding: 20px;
-            color: #666;
+            color: var(--text-color);
         }
 
         @media (max-width: 600px) {
