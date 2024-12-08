@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="uk">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Питання до іспиту</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+
+        h2 {
+            color: #2c3e50;
+            font-size: 18px;
+        }
+
+        h3{ 
+            font-size: 16px;
+        }
+
+
+        .search-container {
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            background-color: #f5f5f5;
+            padding: 10px 0;
+            z-index: 100;
+        }
+
+        .search-input {
+            width: 100%;
+            margin: 0 auto;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: border-color 0.3s ease;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .question-container {
+            margin-bottom: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: opacity 0.3s ease;
+        }
+
+        .question-container.hidden {
+            display: none;
+        }
+
+        .question {
+            padding: 15px;
+            background-color: #fff;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: none;
+            width: 100%;
+            text-align: left;
+            font-size: 16px;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .question:hover {
+            background-color: #f8f9fa;
+        }
+
+        .question::after {
+            content: '▼';
+            font-size: 12px;
+            transition: transform 0.3s ease;
+        }
+
+        .question.active::after {
+            transform: rotate(180deg);
+        }
+
+        .answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            background-color: #f8f9fa;
+            padding: 0 15px;
+        }
+
+        .answer.show {
+            max-height: 500px;
+            overflow: scroll;
+            padding: 15px;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            display: none;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .question {
+                font-size: 14px;
+                padding: 12px;
+            }
+
+            .search-input {
+                font-size: 14px;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Питання до іспиту з дисципліни «Методології та технології розробки програмних систем»</h1>
+
+    <div class="search-container">
+        <input type="search" class="search-input" placeholder="Пошук питань..." aria-label="Пошук питань">
+    </div>
+
+    <div class="no-results">
+        Нічого не знайдено
+    </div>
+
+    <div id="questions-list">
+        <div class="loading">Завантаження питань...</div>
+    </div>
+
+    <script type="module">
+        // Дані питань (в реальному додатку це було б завантажено з сервера)
+        const questionsData = await fetch('data.json').then(r => r.json());
+
+        const questionsList = document.getElementById('questions-list');
+        const searchInput = document.querySelector('.search-input');
+        const noResults = document.querySelector('.no-results');
+
+        // Функція для створення HTML-елементу питання
+        function createQuestionElement(questionData) {
+            const container = document.createElement('div');
+            container.className = 'question-container';
+
+            container.innerHTML = `
+                <button class="question">${questionData.id}. ${questionData.question}</button>
+                <div class="answer">${questionData.answer || 'Відповідь буде додано пізніше...'}</div>
+            `;
+
+            return container;
+        }
+
+        // Функція для рендерингу питань
+        function renderQuestions(questions) {
+            questionsList.innerHTML = '';
+            questions.forEach(questionData => {
+                const questionElement = createQuestionElement(questionData);
+                questionsList.appendChild(questionElement);
+            });
+
+            // Додаємо обробники подій для нових елементів
+            addEventListeners();
+        }
+
+        // Функція для фільтрації питань
+        function filterQuestions(searchTerm) {
+            const filteredQuestions = questionsData.questions.filter(questionData => {
+                return questionData.question.toLowerCase().includes(searchTerm.toLowerCase());
+            });
+
+            renderQuestions(filteredQuestions);
+            noResults.style.display = filteredQuestions.length === 0 ? 'block' : 'none';
+        }
+
+        // Функція для додавання обробників подій
+        function addEventListeners() {
+            const questions = document.querySelectorAll('.question');
+
+            questions.forEach(question => {
+                question.addEventListener('click', () => {
+                    question.classList.toggle('active');
+                    const answer = question.nextElementSibling;
+                    answer.classList.toggle('show');
+                });
+            });
+        }
+
+        // Обробник події для пошукового поля
+        searchInput.addEventListener('input', (e) => {
+            filterQuestions(e.target.value);
+        });
+
+        // Початкове відображення питань
+        renderQuestions(questionsData.questions);
+    </script>
+</body>
+
+</html>
