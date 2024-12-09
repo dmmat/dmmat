@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="uk" data-theme="light">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Екзаменаційні білети</title>
+        <style>
+            :root[data-theme="light"] {
+                --bg-color: #f5f5f5;
+                --container-bg: white;
+                --text-color: #333;
+                --border-color: #eee;
+                --search-bg: white;
+                --ticket-header-bg: #f8f8f8;
+                --answer-bg: #f8f8f8;
+                --shadow-color: rgba(0, 0, 0, 0.1);
+            }
+
+            :root[data-theme="dark"] {
+                --bg-color: #1a1a1a;
+                --container-bg: #2d2d2d;
+                --text-color: #e0e0e0;
+                --border-color: #404040;
+                --search-bg: #3d3d3d;
+                --ticket-header-bg: #3d3d3d;
+                --answer-bg: #3d3d3d;
+                --shadow-color: rgba(0, 0, 0, 0.3);
+            }
+
+            * {
+                box-sizing: border-box;
+                margin: 0;
+                padding: 0;
+            }
+
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                    Roboto, "Helvetica Neue", Arial, sans-serif;
+                line-height: 1.6;
+                padding: 1rem;
+                max-width: 1200px;
+                margin: 0 auto;
+                background: var(--bg-color);
+                color: var(--text-color);
+                transition:
+                    background-color 0.3s,
+                    color 0.3s;
+            }
+
+            .container {
+                background: var(--container-bg);
+                border-radius: 8px;
+                box-shadow: 0 2px 4px var(--shadow-color);
+                padding: 1rem;
+                margin-bottom: 2rem;
+            }
+
+            .theme-switch {
+                position: fixed;
+                top: 1rem;
+                right: 1rem;
+                z-index: 1000;
+            }
+
+            .switch {
+                position: relative;
+                display: inline-block;
+                width: 60px;
+                height: 34px;
+            }
+
+            .switch input {
+                opacity: 0;
+                width: 0;
+                height: 0;
+            }
+
+            .slider {
+                position: absolute;
+                cursor: pointer;
+                top: 0;
+                left: 0;
+                right: 0;
+                bottom: 0;
+                background-color: #ccc;
+                transition: 0.4s;
+                border-radius: 34px;
+            }
+
+            .slider:before {
+                position: absolute;
+                content: "";
+                height: 26px;
+                width: 26px;
+                left: 4px;
+                bottom: 4px;
+                background-color: white;
+                transition: 0.4s;
+                border-radius: 50%;
+            }
+
+            input:checked + .slider {
+                background-color: #2196f3;
+            }
+
+            input:checked + .slider:before {
+                transform: translateX(26px);
+            }
+
+            h1 {
+                text-align: center;
+                margin-bottom: 1.5rem;
+                font-size: 1.5rem;
+            }
+
+            .search-wrapper {
+                position: sticky;
+                top: 0;
+                background: var(--container-bg);
+                padding: 1rem 0;
+                z-index: 100;
+            }
+
+            .search-container {
+                position: relative;
+                margin-bottom: 1rem;
+            }
+
+            .search-input {
+                width: 100%;
+                padding: 0.8rem 1rem 0.8rem 2.5rem;
+                font-size: 1rem;
+                border: 1px solid var(--border-color);
+                border-radius: 4px;
+                outline: none;
+                background: var(--search-bg);
+                color: var(--text-color);
+            }
+
+            .search-icon {
+                position: absolute;
+                left: 0.8rem;
+                top: 50%;
+                transform: translateY(-50%);
+                width: 1.2rem;
+                height: 1.2rem;
+                color: #666;
+            }
+
+            .ticket {
+                background: var(--container-bg);
+                border: 1px solid var(--border-color);
+                border-radius: 4px;
+                margin-bottom: 1rem;
+                overflow: hidden;
+            }
+
+            .ticket-header {
+                background: var(--ticket-header-bg);
+                padding: 0.8rem;
+                font-weight: bold;
+                border-bottom: 1px solid var(--border-color);
+            }
+
+            .question {
+                border-bottom: 1px solid var(--border-color);
+                padding: 0.8rem;
+                cursor: pointer;
+            }
+
+            .question:last-child {
+                border-bottom: none;
+            }
+
+            .question-text {
+                font-weight: 500;
+                margin-bottom: 0.5rem;
+            }
+
+            .answer {
+                display: none;
+                padding: 0.8rem;
+                background: var(--answer-bg);
+                margin-top: 0.5rem;
+                border-radius: 4px;
+                white-space: pre-line;
+            }
+
+            .question.active .answer {
+                display: block;
+            }
+
+            .no-results {
+                display: none;
+                text-align: center;
+                padding: 2rem;
+                color: var(--text-color);
+            }
+
+            @media (max-width: 768px) {
+                body {
+                    padding: 0.5rem;
+                }
+
+                .container {
+                    padding: 0.8rem;
+                }
+
+                h1 {
+                    font-size: 1.2rem;
+                }
+
+                .ticket-header {
+                    padding: 0.6rem;
+                }
+
+                .question {
+                    padding: 0.6rem;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="theme-switch">
+            <label class="switch">
+                <input type="checkbox" id="theme-toggle" />
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="container">
+            <h1>
+                Екзаменаційні білети з Реінжинірінгу та оптимізації програмних
+                систем
+            </h1>
+
+            <div class="search-wrapper" id="search-wrapper">
+                <div class="search-container">
+                    <svg
+                        class="search-icon"
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                    </svg>
+                    <input
+                        type="text"
+                        class="search-input"
+                        placeholder="Пошук за номером білета або питанням..."
+                    />
+                </div>
+            </div>
+
+            <div id="tickets-container"></div>
+            <div class="no-results">Нічого не знайдено</div>
+        </div>
+        <script src="data.js"></script>
+        <script type="module">
+            function createTicketElement(ticket) {
+                const ticketDiv = document.createElement("div");
+                ticketDiv.className = "ticket";
+
+                const header = document.createElement("div");
+                header.className = "ticket-header";
+                header.textContent = `Білет ${ticket.id}`;
+                ticketDiv.appendChild(header);
+
+                ticket.questions.forEach((q, idx) => {
+                    const questionDiv = document.createElement("div");
+                    questionDiv.className = "question";
+
+                    const questionText = document.createElement("div");
+                    questionText.className = "question-text";
+                    questionText.textContent = `${idx + 1}. ${q.question}`;
+
+                    const answer = document.createElement("div");
+                    answer.className = "answer";
+                    answer.textContent = q.answer;
+
+                    questionDiv.appendChild(questionText);
+                    questionDiv.appendChild(answer);
+
+                    questionDiv.addEventListener("click", () => {
+                        questionDiv.classList.toggle("active");
+                    });
+
+                    ticketDiv.appendChild(questionDiv);
+                });
+
+                return ticketDiv;
+            }
+
+            function renderTickets(tickets) {
+                const container = document.getElementById("tickets-container");
+                const noResults = document.querySelector(".no-results");
+                container.innerHTML = "";
+
+                if (tickets.length === 0) {
+                    noResults.style.display = "block";
+                    return;
+                }
+
+                noResults.style.display = "none";
+                tickets.forEach((ticket) => {
+                    container.appendChild(createTicketElement(ticket));
+                });
+            }
+
+            // Theme toggling
+            const themeToggle = document.getElementById("theme-toggle");
+            const root = document.documentElement;
+
+            themeToggle.addEventListener("change", (e) => {
+                if (e.target.checked) {
+                    root.setAttribute("data-theme", "dark");
+                    localStorage.setItem("theme", "dark");
+                } else {
+                    root.setAttribute("data-theme", "light");
+                    localStorage.setItem("theme", "light");
+                }
+            });
+
+            // Load saved theme preference
+            const savedTheme = localStorage.getItem("theme") || "light";
+            root.setAttribute("data-theme", savedTheme);
+            themeToggle.checked = savedTheme === "dark";
+
+            // Search functionality
+            const searchInput = document.querySelector(".search-input");
+            searchInput.addEventListener("input", (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const filteredTickets = examData.tickets.filter((ticket) => {
+                    return (
+                        `білет ${ticket.id}`.includes(searchTerm) ||
+                        ticket.questions.some(
+                            (q) =>
+                                q.question.toLowerCase().includes(searchTerm) ||
+                                q.answer.toLowerCase().includes(searchTerm),
+                        )
+                    );
+                });
+                renderTickets(filteredTickets);
+            });
+
+            // Initial render
+            renderTickets(examData.tickets);
+
+            // Intersection Observer for search bar
+            const searchWrapper = document.getElementById("search-wrapper");
+            const observer = new IntersectionObserver(
+                ([e]) => {
+                    if (e.intersectionRatio < 1) {
+                        searchWrapper.classList.add("sticky");
+                    } else {
+                        searchWrapper.classList.remove("sticky");
+                    }
+                },
+                { threshold: [1] },
+            );
+
+            observer.observe(searchWrapper);
+        </script>
+    </body>
+</html>
