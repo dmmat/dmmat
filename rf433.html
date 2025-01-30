@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>ESP32 RF433 BLE Bridge</title>
+  <!-- Bootstrap 5 (CDN) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      margin: 20px;
+    }
+    .received-code-entry {
+      border-left: 4px solid #0d6efd;
+      padding-left: 10px;
+      margin-bottom: 8px;
+    }
+  </style>
+</head>
+<body class="bg-light">
+  <div class="container">
+    <h1 class="my-4 text-primary">ESP32 RF433 BLE Bridge</h1>
+
+    <div class="card p-3 mb-4">
+      <div class="mb-3">
+        <button id="connectBtn" class="btn btn-primary">Connect to ESP32</button>
+        <span id="status" class="ms-3 text-muted">Disconnected</span>
+      </div>
+      <div class="mb-3">
+        <label for="rfCodeInput" class="form-label">Send a 433 Code:</label>
+        <input type="text" class="form-control" id="rfCodeInput" placeholder="Enter a code (e.g. 123456)" />
+      </div>
+      <div class="mb-3">
+        <label for="bitLengthSelect" class="form-label">Bit Length:</label>
+        <select id="bitLengthSelect" class="form-select">
+          <!-- Populate some common bit lengths -->
+          <option value="8">8</option>
+          <option value="16">16</option>
+          <option value="24" selected>24</option>
+          <option value="32">32</option>
+          <option value="36">36</option>
+          <option value="40">40</option>
+        </select>
+      </div>
+      <button id="sendBtn" class="btn btn-success">Send Code</button>
+    </div>
+
+    <div class="card p-3">
+      <h4>Received Codes:</h4>
+      <div id="receivedCodes" class="mt-3"></div>
+    </div>
+  </div>
+
+  <script>
+    // Replace these with your own UUIDs
+    const SERVICE_UUID = '12345678-1234-1234-1234-1234567890ab';
+    const CHARACTERISTIC_UUID = 'abcdefab-1234-1234-1234-abcdefabcdef';
+
+    let bleDevice = null;
+    let bleCharacteristic = null;
+
+    const statusElem = document.getElementById('status');
+    const receivedCodesElem = document.getElementById('receivedCodes');
+    const connectBtn = document.getElementById('connectBtn');
+    const sendBtn = document.getElementById('sendBtn');
+    const rfCodeInput = document.getElementById('rfCodeInput');
+    const bitLengthSelect = document.getElementById('bitLengthSelect');
+
+    connectBtn.addEventListener('click', async () => {
+      try {
+        // Request the Bluetooth device
+        bleDevice = await navigator.bluetooth.requestDevice({
+          filters: [{ services: [SERVICE_UUID] }]
+        });
+        bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+
+        // Connect GATT
+        const server = await bleDevice.gatt.connect();
+        statusElem.textContent = 'Connected to GATT';
+
+        // Get the custom service
+        const service = await server.getPrimaryService(SERVICE_UUID);
+
+        // Get the characteristic
+        bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+        // Subscribe to notifications
+        await bleCharacteristic.startNotifications();
+        bleCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
+
+        statusElem.textContent = 'Connected & Subscribed';
+      } catch (error) {
+        console.error(error);
+        statusElem.textContent = 'Connection failed: ' + error;
+      }
+    });
+
+    function onDisconnected() {
+      statusElem.textContent = 'Disconnected';
+      bleDevice = null;
+      bleCharacteristic = null;
+    }
+
+    // Handle incoming notifications (433 codes from ESP32: "code,bitLength")
+    function handleNotifications(event) {
+      const value = event.target.value;
+      // Convert from Uint8Array to string
+      const decoder = new TextDecoder('utf-8');
+      const receivedString = decoder.decode(value);
+      console.log('Received:', receivedString);
+
+      // Expect "code,bitLength"
+      const parts = receivedString.split(',');
+      let code = parts[0] || 'N/A';
+      let bitLen = parts[1] || 'N/A';
+
+      // Display
+      const div = document.createElement('div');
+      div.className = 'received-code-entry';
+      div.textContent = `Code: ${code}, Bit Length: ${bitLen}`;
+      receivedCodesElem.prepend(div); // show newest first
+    }
+
+    // Send a code from the web page to the ESP32 (which transmits it over 433)
+    sendBtn.addEventListener('click', async () => {
+      if (!bleCharacteristic) {
+        alert('Not connected to BLE device');
+        return;
+      }
+      const codeStr = rfCodeInput.value.trim();
+      const bitLen = bitLengthSelect.value;
+      if (!codeStr) {
+        alert('Please enter a code first');
+        return;
+      }
+
+      // Combine into "code,bitLength"
+      const message = `${codeStr},${bitLen}`;
+
+      // Convert string to bytes
+      const encoder = new TextEncoder();
+      const data = encoder.encode(message);
+
+      try {
+        await bleCharacteristic.writeValueWithoutResponse(data);
+        console.log('Sent:', message);
+      } catch (error) {
+        console.error('Error sending code:', error);
+      }
+    });
+  </script>
+</body>
+</html>
