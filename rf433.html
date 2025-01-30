@@ -2,53 +2,104 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ESP32 RF433 BLE Bridge</title>
-  <!-- Bootstrap 5 (CDN) -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Bootstrap 5 (CSS) -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- Theme color meta (for mobile address bar) -->
+  <meta name="theme-color" content="#0d6efd" />
+
   <style>
     body {
       margin: 20px;
+      background-color: #f8f9fa;
     }
     .received-code-entry {
       border-left: 4px solid #0d6efd;
       padding-left: 10px;
       margin-bottom: 8px;
     }
+    .saved-code-entry {
+      border-left: 4px solid #198754;
+      padding-left: 10px;
+      margin-bottom: 8px;
+    }
   </style>
 </head>
-<body class="bg-light">
+<body>
   <div class="container">
     <h1 class="my-4 text-primary">ESP32 RF433 BLE Bridge</h1>
 
+    <!-- BLE Connection & Status -->
     <div class="card p-3 mb-4">
-      <div class="mb-3">
-        <button id="connectBtn" class="btn btn-primary">Connect to ESP32</button>
-        <span id="status" class="ms-3 text-muted">Disconnected</span>
-      </div>
-      <div class="mb-3">
-        <label for="rfCodeInput" class="form-label">Send a 433 Code:</label>
-        <input type="text" class="form-control" id="rfCodeInput" placeholder="Enter a code (e.g. 123456)" />
-      </div>
-      <div class="mb-3">
-        <label for="bitLengthSelect" class="form-label">Bit Length:</label>
-        <select id="bitLengthSelect" class="form-select">
-          <!-- Populate some common bit lengths -->
-          <option value="8">8</option>
-          <option value="16">16</option>
-          <option value="24" selected>24</option>
-          <option value="32">32</option>
-          <option value="36">36</option>
-          <option value="40">40</option>
-        </select>
-      </div>
-      <button id="sendBtn" class="btn btn-success">Send Code</button>
+      <button id="connectBtn" class="btn btn-primary">Connect to ESP32</button>
+      <span id="status" class="ms-3 text-muted">Disconnected</span>
     </div>
 
-    <div class="card p-3">
-      <h4>Received Codes:</h4>
+    <!-- Send / Save Code -->
+    <div class="card p-3 mb-4">
+      <h4>Send a 433 Code</h4>
+      <div class="row mb-3">
+        <div class="col-6">
+          <label for="rfCodeInput" class="form-label">Code:</label>
+          <input
+            type="text"
+            class="form-control"
+            id="rfCodeInput"
+            placeholder="e.g. 123456"
+          />
+        </div>
+        <div class="col-6">
+          <label for="bitLengthSelect" class="form-label">Bit Length:</label>
+          <select id="bitLengthSelect" class="form-select">
+            <option value="8">8</option>
+            <option value="16">16</option>
+            <option value="24" selected>24</option>
+            <option value="32">32</option>
+            <option value="36">36</option>
+            <option value="40">40</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <button id="sendBtn" class="btn btn-success me-2">Send Code</button>
+        <button id="saveBtn" class="btn btn-outline-secondary">Save Code</button>
+      </div>
+    </div>
+
+    <!-- Received Codes -->
+    <div class="card p-3 mb-4">
+      <h4>Received Codes</h4>
+      <p class="text-muted" style="font-size: 0.9rem;">
+        Any 433 MHz codes picked up by the ESP32 will appear below. You can also
+        save them to your library.
+      </p>
       <div id="receivedCodes" class="mt-3"></div>
     </div>
+
+    <!-- Saved Codes (LocalStorage) -->
+    <div class="card p-3 mb-4">
+      <h4>Saved Codes</h4>
+      <p class="text-muted" style="font-size: 0.9rem;">
+        These codes are stored in your browser’s localStorage so you can send
+        them again.
+      </p>
+      <div id="savedCodes" class="mt-3"></div>
+    </div>
   </div>
+
+  <!-- Bootstrap 5 (JS) -->
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+  ></script>
 
   <script>
     // Replace these with your own UUIDs
@@ -60,11 +111,18 @@
 
     const statusElem = document.getElementById('status');
     const receivedCodesElem = document.getElementById('receivedCodes');
+    const savedCodesElem = document.getElementById('savedCodes');
+
     const connectBtn = document.getElementById('connectBtn');
     const sendBtn = document.getElementById('sendBtn');
+    const saveBtn = document.getElementById('saveBtn');
+
     const rfCodeInput = document.getElementById('rfCodeInput');
     const bitLengthSelect = document.getElementById('bitLengthSelect');
 
+    /*******************************************************
+     * 1. BLE CONNECTION
+     *******************************************************/
     connectBtn.addEventListener('click', async () => {
       try {
         // Request the Bluetooth device
@@ -100,10 +158,11 @@
       bleCharacteristic = null;
     }
 
-    // Handle incoming notifications (433 codes from ESP32: "code,bitLength")
+    /*******************************************************
+     * 2. HANDLE INCOMING NOTIFICATIONS ("code,bitLength")
+     *******************************************************/
     function handleNotifications(event) {
       const value = event.target.value;
-      // Convert from Uint8Array to string
       const decoder = new TextDecoder('utf-8');
       const receivedString = decoder.decode(value);
       console.log('Received:', receivedString);
@@ -113,30 +172,38 @@
       let code = parts[0] || 'N/A';
       let bitLen = parts[1] || 'N/A';
 
-      // Display
+      // Display in the "Received Codes" UI
       const div = document.createElement('div');
-      div.className = 'received-code-entry';
-      div.textContent = `Code: ${code}, Bit Length: ${bitLen}`;
-      receivedCodesElem.prepend(div); // show newest first
+      div.className = 'received-code-entry d-flex justify-content-between align-items-center';
+      div.innerHTML = `
+        <div>
+          <strong>Code:</strong> ${code}, <strong>Bit:</strong> ${bitLen}
+        </div>
+        <button class="btn btn-sm btn-outline-secondary">Save</button>
+      `;
+      // Add "save" button logic
+      const saveBtn = div.querySelector('button');
+      saveBtn.addEventListener('click', () => {
+        saveCodeEntry(code, bitLen);
+      });
+
+      receivedCodesElem.prepend(div); // newest first
     }
 
-    // Send a code from the web page to the ESP32 (which transmits it over 433)
-    sendBtn.addEventListener('click', async () => {
+    /*******************************************************
+     * 3. SEND A CODE ("code,bitLength")
+     *******************************************************/
+    async function sendCode(codeStr, bitLen) {
       if (!bleCharacteristic) {
         alert('Not connected to BLE device');
         return;
       }
-      const codeStr = rfCodeInput.value.trim();
-      const bitLen = bitLengthSelect.value;
       if (!codeStr) {
         alert('Please enter a code first');
         return;
       }
 
-      // Combine into "code,bitLength"
       const message = `${codeStr},${bitLen}`;
-
-      // Convert string to bytes
       const encoder = new TextEncoder();
       const data = encoder.encode(message);
 
@@ -146,7 +213,109 @@
       } catch (error) {
         console.error('Error sending code:', error);
       }
+    }
+
+    sendBtn.addEventListener('click', () => {
+      const codeStr = rfCodeInput.value.trim();
+      const bitLen = bitLengthSelect.value;
+      sendCode(codeStr, bitLen);
     });
+
+    /*******************************************************
+     * 4. SAVE / LOAD CODES (LOCALSTORAGE)
+     *******************************************************/
+    // Key used in localStorage to store the array of codes
+    const STORAGE_KEY = 'savedRfCodes';
+
+    // Load existing codes from localStorage on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      displaySavedCodes();
+      // Register service worker for PWA (optional)
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(() => console.log('Service Worker registered.'))
+          .catch(err => console.warn('SW registration failed:', err));
+      }
+    });
+
+    // Save from manual input
+    saveBtn.addEventListener('click', () => {
+      const codeStr = rfCodeInput.value.trim();
+      const bitLen = bitLengthSelect.value;
+      saveCodeEntry(codeStr, bitLen);
+    });
+
+    function saveCodeEntry(codeStr, bitLen) {
+      if (!codeStr) {
+        alert('No code to save.');
+        return;
+      }
+      // Load current list
+      const codes = loadSavedCodes();
+      // Check if duplicate? (Optional check)
+      const alreadyExists = codes.some(c => c.code === codeStr && c.bitLen === bitLen);
+      if (!alreadyExists) {
+        codes.push({ code: codeStr, bitLen: parseInt(bitLen, 10) });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(codes));
+        displaySavedCodes();
+      } else {
+        alert('This code is already saved.');
+      }
+    }
+
+    function loadSavedCodes() {
+      try {
+        const stored = localStorage.getItem(STORAGE_KEY);
+        return stored ? JSON.parse(stored) : [];
+      } catch (e) {
+        console.warn('Failed to parse savedRfCodes:', e);
+        return [];
+      }
+    }
+
+    function displaySavedCodes() {
+      savedCodesElem.innerHTML = '';
+      const codes = loadSavedCodes();
+      if (codes.length === 0) {
+        savedCodesElem.innerHTML = '<p class="text-muted">No saved codes yet.</p>';
+        return;
+      }
+
+      // Create a list of entries
+      codes.forEach((item, index) => {
+        const div = document.createElement('div');
+        div.className = 'saved-code-entry d-flex justify-content-between align-items-center';
+        div.innerHTML = `
+          <div>
+            <strong>Code:</strong> ${item.code}, 
+            <strong>Bit:</strong> ${item.bitLen}
+          </div>
+          <div>
+            <button class="btn btn-sm btn-success me-2">Send</button>
+            <button class="btn btn-sm btn-danger">Delete</button>
+          </div>
+        `;
+        // "Send" button
+        const sendBtn = div.querySelector('.btn-success');
+        sendBtn.addEventListener('click', () => {
+          sendCode(item.code, item.bitLen);
+        });
+        // "Delete" button
+        const deleteBtn = div.querySelector('.btn-danger');
+        deleteBtn.addEventListener('click', () => {
+          deleteCodeEntry(index);
+        });
+
+        savedCodesElem.prepend(div); // newest at top
+      });
+    }
+
+    function deleteCodeEntry(index) {
+      const codes = loadSavedCodes();
+      codes.splice(index, 1);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(codes));
+      displaySavedCodes();
+    }
   </script>
 </body>
 </html>
