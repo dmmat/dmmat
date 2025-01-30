@@ -1,7 +1,7 @@
 const CACHE_NAME = 'rf433-ble-cache-v1';
 const ASSETS_TO_CACHE = [
   './',
-  './index.html',
+  './rf433.html',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png'
