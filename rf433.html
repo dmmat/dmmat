@@ -1,321 +1,359 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ESP32 RF433 BLE Bridge</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <!-- Bootstrap 5 (CSS) -->
+  <!-- Bootstrap (CDN) для швидкого оформлення -->
   <link
     href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
     rel="stylesheet"
   />
-
-  <!-- PWA Manifest -->
-  <link rel="manifest" href="manifest.json?v=2" />
-
-  <!-- Theme color meta (for mobile address bar) -->
-  <meta name="theme-color" content="#0d6efd" />
-
   <style>
     body {
       margin: 20px;
-      background-color: #f8f9fa;
+      background: #f8f9fa;
     }
-    .received-code-entry {
+    .code-entry {
       border-left: 4px solid #0d6efd;
-      padding-left: 10px;
-      margin-bottom: 8px;
-    }
-    .saved-code-entry {
-      border-left: 4px solid #198754;
       padding-left: 10px;
       margin-bottom: 8px;
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1 class="my-4 text-primary">ESP32 RF433 BLE Bridge</h1>
+<div class="container">
+  <h1 class="my-4 text-primary">ESP32 RF433 BLE Bridge</h1>
 
-    <!-- BLE Connection & Status -->
-    <div class="card p-3 mb-4">
-      <button id="connectBtn" class="btn btn-primary">Connect to ESP32</button>
-      <span id="status" class="ms-3 text-muted">Disconnected</span>
-    </div>
-
-    <!-- Send / Save Code -->
-    <div class="card p-3 mb-4">
-      <h4>Send a 433 Code</h4>
-      <div class="row mb-3">
-        <div class="col-6">
-          <label for="rfCodeInput" class="form-label">Code:</label>
-          <input
-            type="text"
-            class="form-control"
-            id="rfCodeInput"
-            placeholder="e.g. 123456"
-          />
-        </div>
-        <div class="col-6">
-          <label for="bitLengthSelect" class="form-label">Bit Length:</label>
-          <select id="bitLengthSelect" class="form-select">
-            <option value="8">8</option>
-            <option value="16">16</option>
-            <option value="24" selected>24</option>
-            <option value="32">32</option>
-            <option value="36">36</option>
-            <option value="40">40</option>
-          </select>
-        </div>
-      </div>
-      <div>
-        <button id="sendBtn" class="btn btn-success me-2">Send Code</button>
-        <button id="saveBtn" class="btn btn-outline-secondary">Save Code</button>
-      </div>
-    </div>
-
-    <!-- Received Codes -->
-    <div class="card p-3 mb-4">
-      <h4>Received Codes</h4>
-      <p class="text-muted" style="font-size: 0.9rem;">
-        Any 433 MHz codes picked up by the ESP32 will appear below. You can also
-        save them to your library.
-      </p>
-      <div id="receivedCodes" class="mt-3"></div>
-    </div>
-
-    <!-- Saved Codes (LocalStorage) -->
-    <div class="card p-3 mb-4">
-      <h4>Saved Codes</h4>
-      <p class="text-muted" style="font-size: 0.9rem;">
-        These codes are stored in your browser’s localStorage so you can send
-        them again.
-      </p>
-      <div id="savedCodes" class="mt-3"></div>
+  <!-- Підключення до BLE -->
+  <div class="card p-3 mb-4">
+    <div class="d-flex align-items-center">
+      <button id="connectBtn" class="btn btn-primary me-2">Connect</button>
+      <button id="disconnectBtn" class="btn btn-secondary me-3" disabled>Disconnect</button>
+      <span id="status" class="text-muted">Disconnected</span>
     </div>
   </div>
 
-  <!-- Bootstrap 5 (JS) -->
-  <script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
-  ></script>
+  <!-- Налаштування RCSwitch -->
+  <div class="card p-3 mb-4">
+    <h4>Налаштування RCSwitch</h4>
+    <div class="row g-2 mb-3">
+      <div class="col">
+        <label class="form-label">Protocol</label>
+        <input type="number" class="form-control" id="protocolInput" value="1" />
+      </div>
+      <div class="col">
+        <label class="form-label">Pulse (μs)</label>
+        <input type="number" class="form-control" id="pulseInput" value="350" />
+      </div>
+      <div class="col">
+        <label class="form-label">Tolerance</label>
+        <input type="number" class="form-control" id="toleranceInput" value="60" />
+      </div>
+      <div class="col">
+        <label class="form-label">Repeat</label>
+        <input type="number" class="form-control" id="repeatInput" value="4" />
+      </div>
+    </div>
+    <div>
+      <button id="readConfigBtn" class="btn btn-outline-primary me-2">Прочитати</button>
+      <button id="applyConfigBtn" class="btn btn-success">Застосувати</button>
+    </div>
+  </div>
 
-  <script>
-    // Replace these with your own UUIDs
-    const SERVICE_UUID = '12345678-1234-1234-1234-1234567890ab';
-    const CHARACTERISTIC_UUID = 'abcdefab-1234-1234-1234-abcdefabcdef';
+  <!-- Відправка 433 коду -->
+  <div class="card p-3 mb-4">
+    <h4>Надіслати код 433 МГц</h4>
+    <div class="row g-2 mb-3">
+      <div class="col">
+        <label class="form-label">Код</label>
+        <input type="text" class="form-control" id="rfCodeInput" placeholder="Напр. 123456" />
+      </div>
+      <div class="col">
+        <label class="form-label">Бітна довжина</label>
+        <input type="number" class="form-control" id="bitLengthInput" value="24" />
+      </div>
+    </div>
+    <button id="sendCodeBtn" class="btn btn-primary">Send</button>
+  </div>
 
-    let bleDevice = null;
-    let bleCharacteristic = null;
+  <!-- Отримані коди -->
+  <div class="card p-3 mb-4">
+    <h4>Отримані коди (localStorage)</h4>
+    <p class="text-muted" style="font-size: 0.9rem;">
+      Унікальні коди зберігаються в localStorage із датою. Якщо код уже існує,
+      оновлюємо дату й переміщуємо код у початок списку.
+    </p>
+    <div id="receivedCodes"></div>
+  </div>
+</div>
 
-    const statusElem = document.getElementById('status');
-    const receivedCodesElem = document.getElementById('receivedCodes');
-    const savedCodesElem = document.getElementById('savedCodes');
+<!-- Bootstrap JS -->
+<script
+  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+></script>
 
-    const connectBtn = document.getElementById('connectBtn');
-    const sendBtn = document.getElementById('sendBtn');
-    const saveBtn = document.getElementById('saveBtn');
+<script>
+  // --------------------------
+  // UUID із коду ESP32
+  // --------------------------
+  const SERVICE_UUID        = "11111111-1111-1111-1111-111111111111";
+  const CHARACTERISTIC_CFG  = "22222222-2222-2222-2222-222222222222";
+  const CHARACTERISTIC_CODE = "33333333-3333-3333-3333-333333333333";
 
-    const rfCodeInput = document.getElementById('rfCodeInput');
-    const bitLengthSelect = document.getElementById('bitLengthSelect');
+  let bleDevice = null;
+  let bleServer = null;
+  let cfgCharacteristic = null;
+  let codeCharacteristic = null;
 
-    /*******************************************************
-     * 1. BLE CONNECTION
-     *******************************************************/
-    connectBtn.addEventListener('click', async () => {
-      try {
-        // Request the Bluetooth device
-        bleDevice = await navigator.bluetooth.requestDevice({
-          filters: [{ services: [SERVICE_UUID] }]
-        });
-        bleDevice.addEventListener('gattserverdisconnected', onDisconnected);
+  // Елементи управління
+  const connectBtn      = document.getElementById("connectBtn");
+  const disconnectBtn   = document.getElementById("disconnectBtn");
+  const statusElem      = document.getElementById("status");
 
-        // Connect GATT
-        const server = await bleDevice.gatt.connect();
-        statusElem.textContent = 'Connected to GATT';
+  const readConfigBtn   = document.getElementById("readConfigBtn");
+  const applyConfigBtn  = document.getElementById("applyConfigBtn");
+  const protocolInput   = document.getElementById("protocolInput");
+  const pulseInput      = document.getElementById("pulseInput");
+  const toleranceInput  = document.getElementById("toleranceInput");
+  const repeatInput     = document.getElementById("repeatInput");
 
-        // Get the custom service
-        const service = await server.getPrimaryService(SERVICE_UUID);
+  const rfCodeInput     = document.getElementById("rfCodeInput");
+  const bitLengthInput  = document.getElementById("bitLengthInput");
+  const sendCodeBtn     = document.getElementById("sendCodeBtn");
 
-        // Get the characteristic
-        bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+  const receivedCodesElem = document.getElementById("receivedCodes");
 
-        // Subscribe to notifications
-        await bleCharacteristic.startNotifications();
-        bleCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
-
-        statusElem.textContent = 'Connected & Subscribed';
-      } catch (error) {
-        console.error(error);
-        statusElem.textContent = 'Connection failed: ' + error;
-      }
-    });
-
-    function onDisconnected() {
-      statusElem.textContent = 'Disconnected';
-      bleDevice = null;
-      bleCharacteristic = null;
-    }
-
-    /*******************************************************
-     * 2. HANDLE INCOMING NOTIFICATIONS ("code,bitLength")
-     *******************************************************/
-    function handleNotifications(event) {
-      const value = event.target.value;
-      const decoder = new TextDecoder('utf-8');
-      const receivedString = decoder.decode(value);
-      console.log('Received:', receivedString);
-
-      // Expect "code,bitLength"
-      const parts = receivedString.split(',');
-      let code = parts[0] || 'N/A';
-      let bitLen = parts[1] || 'N/A';
-
-      // Display in the "Received Codes" UI
-      const div = document.createElement('div');
-      div.className = 'received-code-entry d-flex justify-content-between align-items-center';
-      div.innerHTML = `
-        <div>
-          <strong>Code:</strong> ${code}, <strong>Bit:</strong> ${bitLen}
-        </div>
-        <button class="btn btn-sm btn-outline-secondary">Save</button>
-      `;
-      // Add "save" button logic
-      const saveBtn = div.querySelector('button');
-      saveBtn.addEventListener('click', () => {
-        saveCodeEntry(code, bitLen);
+  // --------------------------
+  // КНОПКА CONNECT
+  // --------------------------
+  connectBtn.addEventListener("click", async () => {
+    try {
+      // Запит на вибір BLE пристрою, що рекламує наш SERVICE_UUID
+      bleDevice = await navigator.bluetooth.requestDevice({
+        filters: [{ services: [SERVICE_UUID] }]
       });
 
-      receivedCodesElem.prepend(div); // newest first
+      bleDevice.addEventListener("gattserverdisconnected", onDisconnected);
+
+      statusElem.textContent = "Connecting...";
+      // Підключення GATT
+      const server = await bleDevice.gatt.connect();
+      bleServer = server;
+
+      // Отримуємо сервіс
+      const service = await bleServer.getPrimaryService(SERVICE_UUID);
+
+      // Характеристика налаштувань
+      cfgCharacteristic = await service.getCharacteristic(CHARACTERISTIC_CFG);
+      await cfgCharacteristic.startNotifications();
+      cfgCharacteristic.addEventListener("characteristicvaluechanged", onConfigNotify);
+
+      // Характеристика кодів
+      codeCharacteristic = await service.getCharacteristic(CHARACTERISTIC_CODE);
+      await codeCharacteristic.startNotifications();
+      codeCharacteristic.addEventListener("characteristicvaluechanged", onCodeNotify);
+
+      statusElem.textContent = "Connected";
+      disconnectBtn.disabled = false;
+      connectBtn.disabled = true;
+      console.log("[BLE] Підключилися.");
+    } catch (error) {
+      console.error(error);
+      statusElem.textContent = "Connection failed: " + error;
     }
+  });
 
-    /*******************************************************
-     * 3. SEND A CODE ("code,bitLength")
-     *******************************************************/
-    async function sendCode(codeStr, bitLen) {
-      if (!bleCharacteristic) {
-        alert('Not connected to BLE device');
+  // --------------------------
+  // КНОПКА DISCONNECT
+  // --------------------------
+  disconnectBtn.addEventListener("click", () => {
+    if (!bleDevice) return;
+    if (bleDevice.gatt.connected) {
+      console.log("[BLE] Від'єднання...");
+      bleDevice.gatt.disconnect();
+    }
+  });
+
+  function onDisconnected() {
+    console.log("[BLE] Роз'єднано.");
+    statusElem.textContent = "Disconnected";
+    connectBtn.disabled = false;
+    disconnectBtn.disabled = true;
+  }
+
+  // --------------------------
+  // NOTIFY: отримання змін CFG
+  // (у цьому прикладі ми нечасто їх шлемо,
+  // але startNotifications під’єднано про всяк випадок)
+  // --------------------------
+  function onConfigNotify(event) {
+    const value = event.target.value;
+    const decoder = new TextDecoder("utf-8");
+    const str = decoder.decode(value);
+    console.log("[BLE:CFG] Notification:", str);
+  }
+
+  // --------------------------
+  // NOTIFY: отримання кодів
+  // --------------------------
+  function onCodeNotify(event) {
+    const value = event.target.value;
+    const decoder = new TextDecoder("utf-8");
+    const str = decoder.decode(value); // Формат: "код,біт"
+
+    console.log("[BLE:CODE] Notification:", str);
+    const parts = str.split(",");
+    if (parts.length < 2) return;
+    const codeNum = parts[0];
+    const bitLen = parts[1];
+
+    saveReceivedCode(codeNum, bitLen);
+  }
+
+  // --------------------------
+  // Зчитати (READ) Config
+  // --------------------------
+  readConfigBtn.addEventListener("click", async () => {
+    try {
+      if (!cfgCharacteristic) {
+        alert("Не підключено до BLE :(");
         return;
       }
-      if (!codeStr) {
-        alert('Please enter a code first');
+      // Викликаємо readValue() і парсимо JSON
+      const val = await cfgCharacteristic.readValue();
+      const decoder = new TextDecoder("utf-8");
+      const str = decoder.decode(val);
+      console.log("[BLE:CFG] Read:", str);
+
+      const obj = JSON.parse(str); // {"protocol":1,"pulse":350,"tolerance":60,"repeat":4}
+      protocolInput.value = obj.protocol;
+      pulseInput.value = obj.pulse;
+      toleranceInput.value = obj.tolerance;
+      repeatInput.value = obj.repeat;
+
+      alert("Налаштування зчитано успішно!");
+    } catch (error) {
+      console.error(error);
+    }
+  });
+
+  // --------------------------
+  // Записати (WRITE) Config
+  // --------------------------
+  applyConfigBtn.addEventListener("click", async () => {
+    try {
+      if (!cfgCharacteristic) {
+        alert("Не підключено до BLE :(");
         return;
       }
-
-      const message = `${codeStr},${bitLen}`;
+      // Формуємо JSON
+      const obj = {
+        protocol: parseInt(protocolInput.value, 10),
+        pulse: parseInt(pulseInput.value, 10),
+        tolerance: parseInt(toleranceInput.value, 10),
+        repeat: parseInt(repeatInput.value, 10)
+      };
+      const str = JSON.stringify(obj); 
       const encoder = new TextEncoder();
-      const data = encoder.encode(message);
+      const data = encoder.encode(str);
 
-      try {
-        await bleCharacteristic.writeValueWithoutResponse(data);
-        console.log('Sent:', message);
-      } catch (error) {
-        console.error('Error sending code:', error);
-      }
+      await cfgCharacteristic.writeValue(data);
+      alert("Налаштування застосовано!");
+    } catch (error) {
+      console.error(error);
     }
+  });
 
-    sendBtn.addEventListener('click', () => {
-      const codeStr = rfCodeInput.value.trim();
-      const bitLen = bitLengthSelect.value;
-      sendCode(codeStr, bitLen);
+  // --------------------------
+  // Надсилання коду (Write до CODE) 
+  // Формат: "код,біт"
+  // --------------------------
+  sendCodeBtn.addEventListener("click", async () => {
+    if (!codeCharacteristic) {
+      alert("Не підключено до BLE :(");
+      return;
+    }
+    const codeStr = rfCodeInput.value.trim();
+    const bitLen = bitLengthInput.value.trim();
+    if (!codeStr || !bitLen) {
+      alert("Введіть код і бітну довжину!");
+      return;
+    }
+    const msg = codeStr + "," + bitLen;
+    const encoder = new TextEncoder();
+    const data = encoder.encode(msg);
+    try {
+      await codeCharacteristic.writeValueWithoutResponse(data);
+      console.log("[BLE:CODE] Sent:", msg);
+    } catch (error) {
+      console.error("[BLE:CODE] Error:", error);
+    }
+  });
+
+  // --------------------------
+  // Збереження унікальних кодів із датою в localStorage
+  // --------------------------
+  const STORAGE_KEY = "receivedRfCodes";
+
+  // Відображення при завантаженні сторінки
+  document.addEventListener("DOMContentLoaded", () => {
+    loadAndDisplayReceivedCodes();
+  });
+
+  function saveReceivedCode(code, bitLen) {
+    let codes = loadCodes();
+    // Шукаємо, чи вже є такий код
+    let existing = codes.findIndex(item => item.code === code && item.bitLen == bitLen);
+    let now = new Date().toISOString(); // або інший формат
+    if (existing >= 0) {
+      // Оновлюємо дату і переміщаємо вверх
+      codes[existing].date = now;
+      const [found] = codes.splice(existing, 1);
+      codes.unshift(found);
+    } else {
+      // Додаємо новий
+      codes.unshift({ code, bitLen, date: now });
+    }
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(codes));
+    displayReceivedCodes(codes);
+  }
+
+  function loadAndDisplayReceivedCodes() {
+    let codes = loadCodes();
+    displayReceivedCodes(codes);
+  }
+
+  function loadCodes() {
+    try {
+      let stored = localStorage.getItem(STORAGE_KEY);
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      console.warn("Проблема з localStorage:", e);
+      return [];
+    }
+  }
+
+  function displayReceivedCodes(codes) {
+    receivedCodesElem.innerHTML = "";
+    if (codes.length === 0) {
+      receivedCodesElem.innerHTML = '<p class="text-muted">Немає збережених кодів</p>';
+      return;
+    }
+    codes.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "code-entry";
+      const timeStr = new Date(item.date).toLocaleString("uk-UA"); 
+      div.innerHTML = `
+        <strong>Код:</strong> ${item.code}, 
+        <strong>Біт:</strong> ${item.bitLen} <br/>
+        <small class="text-muted">Останнє отримання: ${timeStr}</small>
+      `;
+      receivedCodesElem.appendChild(div);
     });
+  }
+</script>
 
-    /*******************************************************
-     * 4. SAVE / LOAD CODES (LOCALSTORAGE)
-     *******************************************************/
-    // Key used in localStorage to store the array of codes
-    const STORAGE_KEY = 'savedRfCodes';
-
-    // Load existing codes from localStorage on page load
-    document.addEventListener('DOMContentLoaded', () => {
-      displaySavedCodes();
-      // Register service worker for PWA (optional)
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('service-worker.js')
-          .then(() => console.log('Service Worker registered.'))
-          .catch(err => console.warn('SW registration failed:', err));
-      }
-    });
-
-    // Save from manual input
-    saveBtn.addEventListener('click', () => {
-      const codeStr = rfCodeInput.value.trim();
-      const bitLen = bitLengthSelect.value;
-      saveCodeEntry(codeStr, bitLen);
-    });
-
-    function saveCodeEntry(codeStr, bitLen) {
-      if (!codeStr) {
-        alert('No code to save.');
-        return;
-      }
-      // Load current list
-      const codes = loadSavedCodes();
-      // Check if duplicate? (Optional check)
-      const alreadyExists = codes.some(c => c.code === codeStr && c.bitLen === bitLen);
-      if (!alreadyExists) {
-        codes.push({ code: codeStr, bitLen: parseInt(bitLen, 10) });
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(codes));
-        displaySavedCodes();
-      } else {
-        alert('This code is already saved.');
-      }
-    }
-
-    function loadSavedCodes() {
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY);
-        return stored ? JSON.parse(stored) : [];
-      } catch (e) {
-        console.warn('Failed to parse savedRfCodes:', e);
-        return [];
-      }
-    }
-
-    function displaySavedCodes() {
-      savedCodesElem.innerHTML = '';
-      const codes = loadSavedCodes();
-      if (codes.length === 0) {
-        savedCodesElem.innerHTML = '<p class="text-muted">No saved codes yet.</p>';
-        return;
-      }
-
-      // Create a list of entries
-      codes.forEach((item, index) => {
-        const div = document.createElement('div');
-        div.className = 'saved-code-entry d-flex justify-content-between align-items-center';
-        div.innerHTML = `
-          <div>
-            <strong>Code:</strong> ${item.code}, 
-            <strong>Bit:</strong> ${item.bitLen}
-          </div>
-          <div>
-            <button class="btn btn-sm btn-success me-2">Send</button>
-            <button class="btn btn-sm btn-danger">Delete</button>
-          </div>
-        `;
-        // "Send" button
-        const sendBtn = div.querySelector('.btn-success');
-        sendBtn.addEventListener('click', () => {
-          sendCode(item.code, item.bitLen);
-        });
-        // "Delete" button
-        const deleteBtn = div.querySelector('.btn-danger');
-        deleteBtn.addEventListener('click', () => {
-          deleteCodeEntry(index);
-        });
-
-        savedCodesElem.prepend(div); // newest at top
-      });
-    }
-
-    function deleteCodeEntry(index) {
-      const codes = loadSavedCodes();
-      codes.splice(index, 1);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(codes));
-      displaySavedCodes();
-    }
-  </script>
 </body>
 </html>
