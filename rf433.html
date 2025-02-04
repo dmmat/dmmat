@@ -4,14 +4,20 @@
   <meta charset="UTF-8" />
   <title>ESP32 RF433 BLE Bridge</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <link
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+    rel="stylesheet"
+  />
   <style>
     :root {
       --primary-color: #0d6efd;
       --success-color: #198754;
     }
-    
+
     body {
       background: #f0f2f5;
       margin: 0;
@@ -20,14 +26,14 @@
 
     .card {
       border: none;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
       margin-bottom: 1.5rem;
       border-radius: 10px;
     }
 
     .card-header {
       background: none;
-      border-bottom: 1px solid rgba(0,0,0,0.1);
+      border-bottom: 1px solid rgba(0, 0, 0, 0.1);
       padding: 1rem 1.25rem;
     }
 
@@ -55,15 +61,16 @@
       border-radius: 8px;
       padding: 1rem;
       margin-bottom: 0.75rem;
-      border: 1px solid rgba(0,0,0,0.1);
+      border: 1px solid rgba(0, 0, 0, 0.1);
       transition: all 0.2s;
     }
 
     .code-entry:hover {
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
-    .form-control, .form-select {
+    .form-control,
+    .form-select {
       border-radius: 8px;
       padding: 0.5rem 1rem;
     }
@@ -102,8 +109,14 @@
     }
 
     @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .new-code {
@@ -128,73 +141,62 @@
               <i class="fas fa-times me-2"></i>Відключити
             </button>
           </div>
-          <hr>
+          <hr />
           <div id="status" class="connection-status disconnected">
             <i class="fas fa-circle status-dot"></i>
             Немає з'єднання
           </div>
         </div>
-        
       </div>
 
       <!-- RF Configuration -->
       <div class="card mb-4">
         <div class="card-header">
-          <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Налаштування RF433</h5>
+          <h5 class="mb-0"><i class="fas fa-cogs me-2"></i>Налаштування</h5>
         </div>
         <div class="card-body">
           <div class="row g-3">
-            <div class="col-md-6">
+            <div class="col-md-3">
               <label class="form-label">Протокол</label>
               <select class="form-select" id="protocolInput">
-                <option value="1">Protocol 1 - Default</option>
-                <option value="2">Protocol 2 - Princeton</option>
-                <option value="3">Protocol 3 - RCSwitch Type A</option>
-                <option value="4">Protocol 4 - RCSwitch Type B</option>
-                <option value="5">Protocol 5 - RCSwitch Type C</option>
-                <option value="6">Protocol 6 - RCSwitch Type D</option>
+                <option value="1">Protocol 1</option>
+                <option value="2">Protocol 2</option>
+                <option value="3">Protocol 3</option>
+                <option value="4">Protocol 4</option>
+                <option value="5">Protocol 5</option>
+                <option value="6">Protocol 6</option>
               </select>
               <div class="protocol-info" id="protocolInfo">
-                Стандартний протокол для більшості пристроїв 433 МГц
+                Оберіть протокол
               </div>
             </div>
-            <div class="col-md-6">
+            <div class="col-md-3">
               <label class="form-label">Тривалість імпульсу (μs)</label>
-              <select class="form-select" id="pulseInput">
-                <option value="350">350 (Default)</option>
-                <option value="189">189 (Short)</option>
-                <option value="500">500 (Long)</option>
-                <option value="300">300 </option>
-                <option value="400">400 </option>
-                <option value="250">250 </option>
-                <option value="custom">Користувацьке значення</option>
-              </select>
+              <input
+                type="number"
+                class="form-control"
+                id="pulseInput"
+                value="350"
+              />
             </div>
-            <div class="col-md-6">
-              <label class="form-label">Толерантність (%)</label>
-              <input type="range" class="form-range" id="toleranceInput" min="30" max="100" value="60" />
-              <div class="d-flex justify-content-between">
-                <span class="text-muted">30%</span>
-                <span id="toleranceValue" class="text-primary">60%</span>
-                <span class="text-muted">100%</span>
-              </div>
+            <div class="col-md-3">
+              <label class="form-label">Бітна довжина</label>
+              <input
+                type="number"
+                class="form-control"
+                id="bitLengthInput"
+                value="24"
+              />
             </div>
-            <div class="col-md-6">
+            <div class="col-md-3">
               <label class="form-label">Кількість повторів</label>
-              <div class="input-group">
-                <button class="btn btn-outline-secondary" id="decreaseRepeat">-</button>
-                <input type="number" class="form-control text-center" id="repeatInput" value="4" min="1" max="10">
-                <button class="btn btn-outline-secondary" id="increaseRepeat">+</button>
-              </div>
+              <input
+                type="number"
+                class="form-control"
+                id="repeatInput"
+                value="4"
+              />
             </div>
-          </div>
-          <div class="mt-4">
-            <button id="readConfigBtn" class="btn btn-outline-primary me-2">
-              <i class="fas fa-sync-alt me-2"></i>Зчитати
-            </button>
-            <button id="applyConfigBtn" class="btn btn-success">
-              <i class="fas fa-check me-2"></i>Застосувати
-            </button>
           </div>
         </div>
       </div>
@@ -206,35 +208,41 @@
         </div>
         <div class="card-body">
           <div class="row g-3">
-            <div class="col-md-8">
-              <label class="form-label">RF Код</label>
-              <input type="text" class="form-control" id="rfCodeInput" placeholder="Введіть код (наприклад: 123456)" />
+            <div class="col-md-6">
+              <label class="form-label">RF Код (value)</label>
+              <input
+                type="text"
+                class="form-control"
+                id="rfCodeInput"
+                placeholder="Напр.: 123456"
+              />
             </div>
-            <div class="col-md-4">
-              <label class="form-label">Бітна довжина</label>
-              <select class="form-select" id="bitLengthInput">
-                <option value="24">24 біт</option>
-                <option value="32">32 біт</option>
-                <option value="16">16 біт</option>
-                <option value="custom">Інше значення</option>
-              </select>
+            <div class="col-md-6">
+              <label class="form-label">Надіслати</label><br />
+              <button id="sendCodeBtn" class="btn btn-primary">
+                <i class="fas fa-broadcast-tower me-2"></i>Надіслати
+              </button>
+              <button id="saveCodeBtn" class="btn btn-outline-secondary ms-2">
+                <i class="fas fa-save me-2"></i>Зберегти
+              </button>
             </div>
-          </div>
-          <div class="mt-3">
-            <button id="sendCodeBtn" class="btn btn-primary me-2">
-              <i class="fas fa-broadcast-tower me-2"></i>Надіслати
-            </button>
-            <button id="saveCodeBtn" class="btn btn-outline-secondary">
-              <i class="fas fa-save me-2"></i>Зберегти
-            </button>
           </div>
         </div>
       </div>
 
       <!-- Received Codes -->
       <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div
+          class="card-header d-flex justify-content-between align-items-center"
+        >
           <h5 class="mb-0"><i class="fas fa-history me-2"></i>Історія кодів</h5>
+          <button
+            class="btn btn-outline-danger btn-sm"
+            id="clearHistoryBtn"
+            title="Очистити історію"
+          >
+            <i class="fas fa-trash"></i>
+          </button>
         </div>
         <div class="card-body">
           <div id="receivedCodes" class="mt-2"></div>
@@ -244,397 +252,309 @@
   </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"
+></script>
 <script>
- // BLE UUIDs and Global State
+/**
+ * Налаштування BLE:
+ *   SERVICE_UUID       -> ваш сервіс
+ *   CHARACTERISTIC_CODE -> характеристика для обміну кодами (JSON)
+ */
 const BLE_CONFIG = {
-  SERVICE_UUID: "8e410001-f315-4f60-9fb8-838830daea50",
-  CHARACTERISTIC_CFG: "8e402002-f315-4f60-9fb8-838830daea50",
-  CHARACTERISTIC_CODE: "8e430003-f315-4f60-9fb8-838830daea50",
+  SERVICE_UUID: "11223344-5566-7788-99aa-bbccddeeff00",
+  CHARACTERISTIC_CODE: "00ffeedd-ccbb-aa99-8877-665544332211", // JSON обмін
   STORAGE_KEY: "receivedRfCodes"
 };
 
-const PROTOCOL_SETTINGS = {
-  1: { // Default
-    pulse: 350,
-    tolerance: 60,
-    repeat: 4,
-    description: "Стандартний протокол для більшості побутових пристроїв 433 МГц. Використовує просту амплітудну модуляцію (ASK/OOK) з тривалістю імпульсу 350μs."
-  },
-  2: { // Princeton
-    pulse: 189,
-    tolerance: 40,
-    repeat: 5,
-    description: "Princeton PT2262/PT2272 - популярний протокол для систем безпеки. Потребує меншої тривалості імпульсу (189μs) та нижчої толерантності для точного декодування."
-  },
-  3: { // RCSwitch Type A
-    pulse: 300,
-    tolerance: 50,
-    repeat: 6,
-    description: "RCSwitch Type A - протокол з триступеневим кодуванням. Середня тривалість імпульсу 300μs та помірна толерантність для балансу між надійністю та швидкістю."
-  },
-  4: { // RCSwitch Type B
-    pulse: 400,
-    tolerance: 70,
-    repeat: 4,
-    description: "RCSwitch Type B - модифікована версія з покращеною синхронізацією. Використовує довший імпульс 400μs та вищу толерантність для кращої завадостійкості."
-  },
-  5: { // RCSwitch Type C
-    pulse: 250,
-    tolerance: 45,
-    repeat: 8,
-    description: "RCSwitch Type C - протокол з розширеним форматом даних. Потребує коротших імпульсів 250μs та точнішого прийому (нижча толерантність)."
-  },
-  6: { // RCSwitch Type D
-    pulse: 500,
-    tolerance: 55,
-    repeat: 6,
-    description: "RCSwitch Type D - найновіший протокол. Використовує довгі імпульси 500μs для максимальної надійності, збалансована толерантність."
-  }
-};
-
+/**
+ * Основний клас для роботи з BLE і UI
+ */
 class RFBridge {
   constructor() {
+    // Посилання на BLE об'єкти
     this.bleDevice = null;
     this.bleServer = null;
-    this.cfgCharacteristic = null;
     this.codeCharacteristic = null;
+
     this.isConnected = false;
-    
-    // Cache DOM elements
+
+    // DOM-елементи
     this.elements = {
       connectBtn: document.getElementById("connectBtn"),
       disconnectBtn: document.getElementById("disconnectBtn"),
       status: document.getElementById("status"),
-      readConfigBtn: document.getElementById("readConfigBtn"),
-      applyConfigBtn: document.getElementById("applyConfigBtn"),
-      protocolInput: document.getElementById("protocolInput"),
-      protocolInfo: document.getElementById("protocolInfo"),
-      pulseInput: document.getElementById("pulseInput"),
-      toleranceInput: document.getElementById("toleranceInput"),
-      repeatInput: document.getElementById("repeatInput"),
+
       rfCodeInput: document.getElementById("rfCodeInput"),
+      protocolInput: document.getElementById("protocolInput"),
+      pulseInput: document.getElementById("pulseInput"),
       bitLengthInput: document.getElementById("bitLengthInput"),
+      repeatInput: document.getElementById("repeatInput"),
+
       sendCodeBtn: document.getElementById("sendCodeBtn"),
       saveCodeBtn: document.getElementById("saveCodeBtn"),
-      receivedCodes: document.getElementById("receivedCodes"),
-      toleranceValue: document.getElementById("toleranceValue")
+      clearHistoryBtn: document.getElementById("clearHistoryBtn"),
+      receivedCodes: document.getElementById("receivedCodes")
     };
 
-    this.initializeEventListeners();
-    this.loadAndDisplayReceivedCodes();
-    this.updateProtocolSettings(); // Початкове налаштування для першого протоколу
+    this.initEventListeners();
+    this.loadAndDisplayCodes();
   }
 
-
-  initializeEventListeners() {
-    // Connection events
+  initEventListeners() {
+    // Кнопки підключення/відключення
     this.elements.connectBtn.addEventListener("click", () => this.connect());
     this.elements.disconnectBtn.addEventListener("click", () => this.disconnect());
 
-    // Config events
-    this.elements.readConfigBtn.addEventListener("click", () => this.readConfig());
-    this.elements.applyConfigBtn.addEventListener("click", () => this.writeConfig());
-    
-    // Protocol change handler
-    this.elements.protocolInput.addEventListener("change", () => {
-      this.updateProtocolSettings();
-      this.writeConfig()
-    });
-
-    // Code events
+    // Кнопка надсилання коду
     this.elements.sendCodeBtn.addEventListener("click", () => this.handleSendCode());
+    // Кнопка зберегти код у локальну історію
     this.elements.saveCodeBtn.addEventListener("click", () => this.handleSaveCode());
-
-    // UI feedback events
-    this.elements.toleranceInput.addEventListener("input", (e) => {
-      this.elements.toleranceValue.textContent = `${e.target.value}%`;
-    });
-
-    // Repeat input controls
-    document.getElementById("decreaseRepeat").addEventListener("click", () => {
-      const current = parseInt(this.elements.repeatInput.value);
-      if (current > 1) this.elements.repeatInput.value = current - 1;
-    });
-
-    document.getElementById("increaseRepeat").addEventListener("click", () => {
-      const current = parseInt(this.elements.repeatInput.value);
-      if (current < 10) this.elements.repeatInput.value = current + 1;
-    });
+    // Кнопка очистити історію
+    this.elements.clearHistoryBtn.addEventListener("click", () => this.clearHistory());
   }
 
-
-  
-  updateProtocolSettings() {
-    const selectedProtocol = this.elements.protocolInput.value;
-    const settings = PROTOCOL_SETTINGS[selectedProtocol];
-    
-    if (settings) {
-      // Оновлюємо значення в інтерфейсі
-      this.elements.pulseInput.value = settings.pulse;
-      this.elements.toleranceInput.value = settings.tolerance;
-      this.elements.repeatInput.value = settings.repeat;
-      this.elements.protocolInfo.textContent = settings.description;
-      
-      // Оновлюємо відображення толерантності
-      this.elements.toleranceValue.textContent = `${settings.tolerance}%`;
-      
-      // Додаткова інформація про специфічні налаштування
-      const additionalInfo = document.createElement('div');
-      additionalInfo.className = 'mt-2 small text-muted';
-      additionalInfo.innerHTML = `
-        <i class="fas fa-info-circle"></i> 
-        Рекомендовані налаштування для цього протоколу:<br>
-        • Тривалість імпульсу: ${settings.pulse}μs<br>
-        • Толерантність: ${settings.tolerance}%<br>
-        • Кількість повторів: ${settings.repeat}
-      `;
-      
-      // Замінюємо попередню додаткову інформацію, якщо вона є
-      const existingInfo = this.elements.protocolInfo.nextElementSibling;
-      if (existingInfo && existingInfo.className.includes('text-muted')) {
-        existingInfo.remove();
-      }
-      this.elements.protocolInfo.parentNode.appendChild(additionalInfo);
-    }
-  }
-  
-
+  // Підключитися до BLE
   async connect() {
     try {
-      this.updateStatus("З'єднуємо...", "connecting");
-      
+      this.updateStatus("Пошук пристрою...", "disconnected");
       this.bleDevice = await navigator.bluetooth.requestDevice({
         filters: [{ services: [BLE_CONFIG.SERVICE_UUID] }]
       });
-      
-      this.bleDevice.addEventListener("gattserverdisconnected", () => this.handleDisconnect());
+      this.bleDevice.addEventListener("gattserverdisconnected", () => this.onDisconnected());
+
+      this.updateStatus("Підключення...", "disconnected");
       this.bleServer = await this.bleDevice.gatt.connect();
-      
+
       const service = await this.bleServer.getPrimaryService(BLE_CONFIG.SERVICE_UUID);
-      
-      // Setup characteristics
-      await this.setupCharacteristics(service);
-      
+
+      // Отримуємо характеристику для JSON-кодів
+      this.codeCharacteristic = await service.getCharacteristic(BLE_CONFIG.CHARACTERISTIC_CODE);
+
+      // Увімкнути повідомлення (notify)
+      await this.codeCharacteristic.startNotifications();
+      this.codeCharacteristic.addEventListener("characteristicvaluechanged", (event) =>
+        this.onCodeNotify(event)
+      );
+
       this.isConnected = true;
-      this.updateUIState(true);
+      this.updateUI(true);
       this.updateStatus("Підключено", "connected");
-      
-      console.log("[BLE] Підключення успішне");
-      this.readConfig(true)
     } catch (error) {
       console.error("[BLE] Помилка підключення:", error);
-      this.updateStatus(`Помилка: ${error.message}`, "error");
-      this.handleDisconnect();
+      this.updateStatus("Помилка: " + error.message, "disconnected");
+      this.isConnected = false;
     }
   }
 
-  async setupCharacteristics(service) {
-    // Config characteristic
-    this.cfgCharacteristic = await service.getCharacteristic(BLE_CONFIG.CHARACTERISTIC_CFG);
-    await this.cfgCharacteristic.startNotifications();
-    this.cfgCharacteristic.addEventListener("characteristicvaluechanged", 
-      (event) => this.handleConfigNotify(event));
-
-    // Code characteristic
-    this.codeCharacteristic = await service.getCharacteristic(BLE_CONFIG.CHARACTERISTIC_CODE);
-    await this.codeCharacteristic.startNotifications();
-    this.codeCharacteristic.addEventListener("characteristicvaluechanged", 
-      (event) => this.handleCodeNotify(event));
-  }
-
+  // Відключитися
   disconnect() {
-    if (this.bleDevice?.gatt.connected) {
+    if (this.bleDevice && this.bleDevice.gatt.connected) {
       this.bleDevice.gatt.disconnect();
     }
   }
 
-  handleDisconnect() {
+  // Подія при розриві з'єднання
+  onDisconnected() {
     this.isConnected = false;
-    this.updateUIState(false);
+    this.updateUI(false);
     this.updateStatus("Немає з'єднання", "disconnected");
-    console.log("[BLE] Роз'єднано");
+    console.log("BLE: Пристрій відключився");
   }
 
-  updateUIState(connected) {
-    this.elements.connectBtn.disabled = connected;
-    this.elements.disconnectBtn.disabled = !connected;
-  }
-
-  updateStatus(message, state) {
-    this.elements.status.textContent = message;
-    this.elements.status.className = `connection-status ${state}`;
-  }
-
-  async readConfig(quiet = false) {
-    if (!this.ensureConnected()) return;
-
-    try {
-      const value = await this.cfgCharacteristic.readValue();
-      const config = JSON.parse(new TextDecoder().decode(value));
-      
-      this.elements.protocolInput.value = config.protocol;
-      this.elements.pulseInput.value = config.pulse;
-      this.elements.toleranceInput.value = config.tolerance;
-      this.elements.repeatInput.value = config.repeat;
-      if (quiet) return
-      this.showNotification("Налаштування зчитано успішно!");
-    } catch (error) {
-      console.error("[BLE:CFG] Помилка читання:", error);
-      this.showNotification("Помилка зчитування налаштувань!", "error");
-    }
-  }
-
-  async writeConfig() {
-    if (!this.ensureConnected()) return;
-
-    try {
-      const config = {
-        protocol: parseInt(this.elements.protocolInput.value),
-        pulse: parseInt(this.elements.pulseInput.value),
-        tolerance: parseInt(this.elements.toleranceInput.value),
-        repeat: parseInt(this.elements.repeatInput.value)
-      };
-
-      const data = new TextEncoder().encode(JSON.stringify(config));
-      await this.cfgCharacteristic.writeValue(data);
-      
-      this.showNotification("Налаштування застосовано!");
-    } catch (error) {
-      console.error("[BLE:CFG] Помилка запису:", error);
-      this.showNotification("Помилка запису налаштувань!", "error");
-    }
-  }
-
-  handleConfigNotify(event) {
-    const value = new TextDecoder().decode(event.target.value);
-    console.log("[BLE:CFG] Notification:", value);
-  }
-
-  handleCodeNotify(event) {
-    const value = new TextDecoder().decode(event.target.value);
-    console.log("[BLE:CODE] Отримано:", value);
-
-    const [code, bitLen] = value.split(",");
-    if (code && bitLen) {
-      this.saveReceivedCode(code, bitLen);
-    }
-  }
-
+  // Відправити код (JSON) на ESP32
   async handleSendCode() {
-    const code = this.elements.rfCodeInput.value.trim();
-    const bitLen = this.elements.bitLengthInput.value.trim();
-    
-    if (!code || !bitLen) {
-      this.showNotification("Будь ласка, введіть код і бітну довжину!", "error");
+    if (!this.isConnected) {
+      alert("Немає BLE-з'єднання!");
       return;
     }
-    
-    await this.sendCodeOverBle(code, bitLen);
+
+    const value = parseInt(this.elements.rfCodeInput.value.trim() || "0");
+    const protocol = parseInt(this.elements.protocolInput.value.trim() || "1");
+    const delay = parseInt(this.elements.pulseInput.value.trim() || "350");
+    const bitlength = parseInt(this.elements.bitLengthInput.value.trim() || "24");
+    const repeat = parseInt(this.elements.repeatInput.value.trim() || "4");
+
+    // Формуємо JSON
+    const dataObj = {
+      value,
+      bitlength,
+      protocol,
+      delay
+      // repeat — за бажанням можна теж відправляти,
+      // якщо прошивка це обробляє
+    };
+
+    try {
+      const data = new TextEncoder().encode(JSON.stringify(dataObj));
+      await this.codeCharacteristic.writeValue(data);
+      console.log("Відправлено JSON:", dataObj);
+      alert("Код відправлено!");
+    } catch (err) {
+      console.error("Помилка відправки JSON:", err);
+      alert("Помилка відправки коду!");
+    }
   }
 
+  // Зберегти код у локальну історію (без відправлення)
   handleSaveCode() {
-    const code = this.elements.rfCodeInput.value.trim();
-    const bitLen = this.elements.bitLengthInput.value.trim();
-    
-    if (!code || !bitLen) {
-      this.showNotification("Будь ласка, введіть код і бітну довжину!", "error");
+    const value = this.elements.rfCodeInput.value.trim();
+    if (!value) {
+      alert("Введіть хоча б саме число (value)!");
       return;
     }
-    
-    this.saveReceivedCode(code, bitLen);
-    this.showNotification("Код збережено!");
+    const protocol = this.elements.protocolInput.value.trim();
+    const delay = this.elements.pulseInput.value.trim();
+    const bitlength = this.elements.bitLengthInput.value.trim();
+
+    const dataObj = {
+      value,
+      bitlength,
+      protocol,
+      delay,
+      date: new Date().toISOString()
+    };
+
+    this.saveToLocalStorage(dataObj);
+    this.displayCodes();
+    alert("Код збережено локально!");
   }
 
-  async sendCodeOverBle(code, bitLen) {
-    if (!this.ensureConnected()) return;
+  // Подія при отриманні notify із ESP32
+  onCodeNotify(event) {
+    const strValue = new TextDecoder().decode(event.target.value);
+    console.log("BLE Notify:", strValue);
 
     try {
-      const data = new TextEncoder().encode(`${code},${bitLen}`);
-      await this.codeCharacteristic.writeValueWithoutResponse(data);
-    } catch (error) {
-      console.error("[BLE:CODE] Помилка відправки:", error);
-      this.showNotification("Помилка відправки коду!", "error");
+      // Припускаємо, що приходить JSON ({"value":..., "bitlength":..., ...})
+      const dataObj = JSON.parse(strValue);
+      if (typeof dataObj.value !== "undefined") {
+        // Зберігаємо та оновлюємо відображення
+        dataObj.date = new Date().toISOString();
+        this.saveToLocalStorage(dataObj);
+        this.displayCodes();
+        console.log("Отримано та збережено:", dataObj);
+      } else {
+        console.warn("Отримано некоректний JSON:", dataObj);
+      }
+    } catch (err) {
+      console.error("Помилка парсингу JSON:", err);
     }
   }
 
-  saveReceivedCode(code, bitLen) {
-    let codes = this.loadCodes();
-    const now = new Date().toISOString();
-    
-    const existingIndex = codes.findIndex(item => 
-      item.code === code && item.bitLen === bitLen
+  // Зберегти в LocalStorage
+  saveToLocalStorage(newCodeObj) {
+    let codes = this.loadFromLocalStorage();
+    // Перевіримо, чи такий самий code+bitlength уже є
+    const idx = codes.findIndex(
+      (c) =>
+        c.value == newCodeObj.value &&
+        c.bitlength == newCodeObj.bitlength &&
+        c.protocol == newCodeObj.protocol 
     );
-
-    if (existingIndex >= 0) {
-      codes[existingIndex].date = now;
-      const [found] = codes.splice(existingIndex, 1);
-      codes.unshift(found);
+    if (idx >= 0) {
+      // Оновимо дату і піднімемо наверх
+      codes[idx].date = newCodeObj.date;
+      const [temp] = codes.splice(idx, 1);
+      codes.unshift(temp);
     } else {
-      codes.unshift({ code, bitLen, date: now });
+      codes.unshift(newCodeObj);
     }
-
     localStorage.setItem(BLE_CONFIG.STORAGE_KEY, JSON.stringify(codes));
-    this.displayReceivedCodes(codes);
   }
 
-  loadCodes() {
+  // Завантажити з LocalStorage
+  loadFromLocalStorage() {
+    let raw = localStorage.getItem(BLE_CONFIG.STORAGE_KEY);
+    if (!raw) return [];
     try {
-      const stored = localStorage.getItem(BLE_CONFIG.STORAGE_KEY);
-      return stored ? JSON.parse(stored) : [];
-    } catch (error) {
-      console.warn("[LocalStorage] Помилка:", error);
+      return JSON.parse(raw);
+    } catch {
       return [];
     }
   }
 
-  loadAndDisplayReceivedCodes() {
-    const codes = this.loadCodes();
-    this.displayReceivedCodes(codes);
+  // Очистити всю історію
+  clearHistory() {
+    if (!confirm("Ви впевнені, що хочете видалити всю історію?")) return;
+    localStorage.removeItem(BLE_CONFIG.STORAGE_KEY);
+    this.displayCodes();
   }
 
-  displayReceivedCodes(codes) {
-    if (codes.length === 0) {
-      this.elements.receivedCodes.innerHTML = 
-        '<p class="text-muted">Немає збережених кодів</p>';
+  // Відобразити дані в блоці "Історія кодів"
+  loadAndDisplayCodes() {
+    this.displayCodes();
+  }
+
+  displayCodes() {
+    const codes = this.loadFromLocalStorage();
+    const container = this.elements.receivedCodes;
+    if (!codes.length) {
+      container.innerHTML = `<p class="text-muted">Немає збережених кодів</p>`;
       return;
     }
 
-    this.elements.receivedCodes.innerHTML = codes.map(item => {
-      const timeStr = new Date(item.date).toLocaleString("uk-UA");
-      return `
-        <div class="code-entry d-flex justify-content-between align-items-center">
-          <div>
-            <strong>Код:</strong> ${item.code}, 
-            <strong>Біт:</strong> ${item.bitLen}<br/>
-            <small class="text-muted">Останнє збереження: ${timeStr}</small>
+    // Генеруємо HTML
+    container.innerHTML = codes
+      .map((item) => {
+        const dateStr = new Date(item.date).toLocaleString("uk-UA");
+        return `
+          <div class="code-entry">
+            <div>
+              <strong>value:</strong> ${item.value},
+              <strong>bitlength:</strong> ${item.bitlength},
+              <strong>protocol:</strong> ${item.protocol},
+              <strong>delay:</strong> ${item.delay} 
+              <br/>
+              <small class="text-muted">Збережено: ${dateStr}</small>
+            </div>
+            <div class="mt-2">
+              <button class="btn btn-sm btn-primary" onclick="rfBridge.sendJsonFromHistory('${item.value}','${item.bitlength}','${item.protocol}','${item.delay}')">
+                <i class="fas fa-paper-plane"></i> Відправити
+              </button>
+            </div>
           </div>
-          <button class="btn btn-sm btn-primary ms-2" 
-            onclick="rfBridge.sendCodeOverBle('${item.code}', '${item.bitLen}')">
-            Відправити
-          </button>
-        </div>
-      `;
-    }).join("");
+        `;
+      })
+      .join("");
   }
 
-  ensureConnected() {
+  // Натискаючи «Відправити» на збереженому коді
+  async sendJsonFromHistory(val, bitlen, proto, delayVal) {
     if (!this.isConnected) {
-      this.showNotification("Немає з'єднання з BLE!", "error");
-      return false;
+      alert("Немає BLE-з'єднання!");
+      return;
     }
-    return true;
+    const dataObj = {
+      value: parseInt(val),
+      bitlength: parseInt(bitlen),
+      protocol: parseInt(proto),
+      delay: parseInt(delayVal)
+    };
+    try {
+      const data = new TextEncoder().encode(JSON.stringify(dataObj));
+      await this.codeCharacteristic.writeValue(data);
+      alert(`Відправлено: ${JSON.stringify(dataObj)}`);
+    } catch (error) {
+      console.error("Помилка надсилання з історії:", error);
+      alert("Помилка відправки!");
+    }
   }
 
-  showNotification(message, type = "success") {
-    // You can replace this with a more sophisticated notification system
-    alert(message);
+  // Оновити UI при підключенні/відключенні
+  updateUI(connected) {
+    this.elements.connectBtn.disabled = connected;
+    this.elements.disconnectBtn.disabled = !connected;
+  }
+
+  // Показати статус
+  updateStatus(message, stateClass) {
+    this.elements.status.textContent = message;
+    this.elements.status.className = `connection-status ${stateClass}`;
   }
 }
 
-// Initialize the application
-var rfBridge = new RFBridge();
+const rfBridge = new RFBridge();
 </script>
-
 </body>
 </html>
