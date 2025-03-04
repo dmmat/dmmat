@@ -534,10 +534,10 @@ class RFBridge {
     try {
       const data = new TextEncoder().encode(JSON.stringify(dataObj));
       await this.codeCharacteristic.writeValue(data);
-      alert(`Відправлено: ${JSON.stringify(dataObj)}`);
+      // alert(`Відправлено: ${JSON.stringify(dataObj)}`);
     } catch (error) {
       console.error("Помилка надсилання з історії:", error);
-      alert("Помилка відправки!");
+     // alert("Помилка відправки!");
     }
   }
 
